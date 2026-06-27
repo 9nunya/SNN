@@ -47,4 +47,3 @@ __host__ __device__ T synapse_step_impl(synapse_state<T> *s, T I, T T_step) {
 
 template __host__ __device__ float synapse_step_impl<float>(synapse_state<float>*, float, float);
 }
-}
