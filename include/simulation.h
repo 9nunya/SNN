@@ -10,6 +10,9 @@ struct simulation_state {
     T cur_time;
     T* inputs;
     T* outputs;
+    T* v_logs;
+    T* w_logs;
+    T* v_th_logs;
     int neuron_stride;
     int synapse_stride;
     neuron_collection<T>* neurons;

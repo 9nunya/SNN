@@ -13,6 +13,9 @@ simulation<T>* simulation_init(simulation_creation_params<T> params) {
     sim->s->cur_time = T{};
     sim->s->inputs = nullptr;
     sim->s->outputs = nullptr;
+    sim->s->v_logs = nullptr;
+    sim->s->w_logs = nullptr;
+    sim->s->v_th_logs = nullptr;
     sim->s->neuron_stride = 0;
     sim->s->synapse_stride = 0;
     sim->s->neurons = nullptr;
@@ -40,6 +43,13 @@ void simulation_run_for(simulation<float>* sim, float wall_dt) {
     sim->s->neuron_stride = neuron_stride;
     sim->s->synapse_stride = synapse_stride;
 
+    if (sim->s->v_logs) delete[] sim->s->v_logs;
+    sim->s->v_logs = n_neurons > 0 ? new float[steps * n_neurons] : nullptr;
+    if (sim->s->w_logs) delete[] sim->s->w_logs;
+    sim->s->w_logs = n_neurons > 0 ? new float[steps * n_neurons] : nullptr;
+    if (sim->s->v_th_logs) delete[] sim->s->v_th_logs;
+    sim->s->v_th_logs = n_neurons > 0 ? new float[steps * n_neurons] : nullptr;
+
     if (n_neurons == 0 && n_synapses == 0) {
         sim->s->cur_time += steps * T_step;
         return;
@@ -54,6 +64,17 @@ void simulation_run_for(simulation<float>* sim, float wall_dt) {
                 for (int i = 0; i < n_neurons; ++i) n_idx[i] = i;
                 compute_load n_load{n_idx, n_neurons};
                 cpu_process_neurons(*sim->s->neurons, n_load, step_in, T_step, step_out);
+                for (int i = 0; i < n_neurons; ++i) {
+                    sim->s->v_logs[step * n_neurons + i] = sim->s->neurons->neurons[i]->s->v;
+                    sim->s->v_th_logs[step * n_neurons + i] = sim->s->neurons->neurons[i]->s->v_th;
+                    if (sim->s->neurons->neurons[i]->s->type == neuron_type::ALIF) {
+                        auto *alif = static_cast<adaptive_neuron_state<float>*>(sim->s->neurons->neurons[i]->s);
+                        sim->s->w_logs[step * n_neurons + i] = alif->w;
+                        sim->s->v_th_logs[step * n_neurons + i] += alif->w;
+                    } else {
+                        sim->s->w_logs[step * n_neurons + i] = 0.0f;
+                    }
+                }
                 delete[] n_idx;
             }
             if (n_synapses > 0) {
@@ -95,6 +116,16 @@ void simulation_run_for(simulation<float>* sim, float wall_dt) {
                 compute_load n_load{d_n_idx, n_neurons};
                 cuda_process_neurons(sim->s->neurons->device_data, n_load, d_step_in, T_step, d_step_out);
                 cudaMemcpy(step_out, d_step_out, neuron_stride * sizeof(float), cudaMemcpyDeviceToHost);
+                cudaMemcpy(sim->s->v_logs + step * n_neurons, sim->s->neurons->device_data.v, n_neurons * sizeof(float), cudaMemcpyDeviceToHost);
+                cudaMemcpy(sim->s->v_th_logs + step * n_neurons, sim->s->neurons->device_data.v_th, n_neurons * sizeof(float), cudaMemcpyDeviceToHost);
+                if (sim->s->neurons->device_data.w) {
+                    cudaMemcpy(sim->s->w_logs + step * n_neurons, sim->s->neurons->device_data.w, n_neurons * sizeof(float), cudaMemcpyDeviceToHost);
+                } else {
+                    for (int i = 0; i < n_neurons; ++i) sim->s->w_logs[step * n_neurons + i] = 0.0f;
+                }
+                for (int i = 0; i < n_neurons; ++i) {
+                    sim->s->v_th_logs[step * n_neurons + i] += sim->s->w_logs[step * n_neurons + i];
+                }
             }
             if (n_synapses > 0) {
                 compute_load s_load{d_s_idx, n_synapses};
