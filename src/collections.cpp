@@ -135,7 +135,6 @@ synapse_collection<T> *synapse_collection_init(int size, conductance_synapse_cre
     return sc;
 }
 
-template void run_simulation_gpu<float>(neuron_collection<float>*, synapse_collection<float>*, float*, int, float);
 template neuron_collection<float> *neuron_collection_init<float>(int, neuron_creation_parameters<float>, range<float>, range<float>, std::vector<float>);
 template neuron_collection<float> *neuron_collection_init<float>(int, adaptive_neuron_creation_parameters<float>, range<float>, range<float>, std::vector<float>);
 template synapse_collection<float> *synapse_collection_init<float>(int, synapse_creation_parameters<float>);
