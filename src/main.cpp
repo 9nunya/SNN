@@ -37,7 +37,7 @@ int main() {
 
     auto* lifs = snn::neuron_collection_init<float>(NUM_NEURONS, n_params, max_rate_range, intercept_range, encoders);
     auto* synapses = snn::synapse_collection_init<float>(NUM_NEURONS,
-        snn::conductance_synapse_creation_parameters<float>{0.01f, 0.0f});
+        snn::conductance_synapse_creation_parameters<float>{ .tau_s = 0.01f, .E_rev = 0.00f });
 
     snn::simulation_creation_params<float> sc_params;
     sc_params.backend = snn::backend_kind::CPU;
