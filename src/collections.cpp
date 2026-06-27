@@ -3,8 +3,6 @@
 
 namespace snn {
 
-void launch_full_sim(neuron_gpu_data<float> n, synapse_gpu_data<float> s, float* d_out, int size, int steps, float T_step);
-
 template<typename T>
 neuron_collection<T> *neuron_collection_init(int size, neuron_creation_parameters<T> n_p, range<T> max_rate_range_, range<T> intercept_range_, std::vector<T> encoder_choices_) {
     neuron_collection<T> *nc = new neuron_collection<T>;
@@ -135,15 +133,6 @@ synapse_collection<T> *synapse_collection_init(int size, conductance_synapse_cre
     cudaMemcpy(sc->device_data.E_rev, h_er.data(), size * sizeof(T), cudaMemcpyHostToDevice);
     cudaMemcpy(sc->device_data.type, h_type.data(), size * sizeof(int), cudaMemcpyHostToDevice);
     return sc;
-}
-
-template<typename T>
-void run_simulation_gpu(neuron_collection<T>* nc, synapse_collection<T>* sc, T* h_output, int steps, T T_step) {
-    T* d_log;
-    cudaMalloc(&d_log, nc->size * steps * sizeof(T));
-    launch_full_sim(nc->device_data, sc->device_data, d_log, nc->size, steps, (float)T_step);
-    cudaMemcpy(h_output, d_log, nc->size * steps * sizeof(T), cudaMemcpyDeviceToHost);
-    cudaFree(d_log);
 }
 
 template void run_simulation_gpu<float>(neuron_collection<float>*, synapse_collection<float>*, float*, int, float);

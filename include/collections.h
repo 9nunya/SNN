@@ -47,8 +47,5 @@ namespace snn {
 
   template<typename T>
   synapse_collection<T> *synapse_collection_init(int size, conductance_synapse_creation_parameters<T> s_p);
-
-  template<typename T>
-  void run_simulation_gpu(neuron_collection<T>* nc, synapse_collection<T>* sc, T* h_output_buffer, int steps, T T_step);
 }
 #endif
