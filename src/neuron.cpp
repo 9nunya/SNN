@@ -55,6 +55,6 @@ namespace snn {
 
   template neuron<float>* neuron_create<float>(neuron_creation_parameters<float>);
   template neuron<float>* neuron_create<float>(adaptive_neuron_creation_parameters<float>);
-  template __host__ __device__ float neuron_analytical_rate<float>(neuron_state<float>*, float, float);
+  template __host__ __device__ float neuron_analytical_rate<float>(neuron_state<float>*, float);
   template gain_bias<float> neuron_get_gain_bias<float>(neuron_state<float>*, float, float);
 }
