@@ -5,7 +5,7 @@
 #include "collections.h"
 #include "simulation.h"
 
-void write_csv(const char* filename, simulation<float>* sim, const float* inputs, int steps, int n_neurons, int n_stride, int s_stride, int total_stride) {
+void write_csv(const char* filename, snn::simulation<float>* sim, const float* inputs, int steps, int n_neurons, int n_stride, int s_stride, int total_stride) {
     std::ofstream out(filename);
     out << "step,input,v,v_th_eff,spike,synapse,w\n";
     for (int i = 0; i < steps; ++i) {
