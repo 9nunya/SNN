@@ -3,42 +3,39 @@
 
 namespace snn {
   template<typename T>
-  neuron_state<T> *neuron_init(neuron_creation_parameters<T> params) {
-    neuron_state<T> *n = new neuron_state<T>;
-    n->v = params.v_init;
-    n->v_th = params.v_th;
-    n->tau_rc = params.tau_rc;
-    n->tau_ref = params.tau_ref;
-    n->rest_time = 0;
-    n->slf = params.slf;
-    n->tau_w = params.tau_w;
-    n->b = params.b;
-    n->w = 0;
+  neuron<T>* neuron_create(neuron_creation_parameters<T> params) {
+    neuron<T> *n = new neuron<T>;
+    n->s = new neuron_state<T>;
+    n->s->v = params.v_init;
+    n->s->v_th = params.v_th;
+    n->s->tau_rc = params.tau_rc;
+    n->s->tau_ref = params.tau_ref;
+    n->s->rest_time = 0;
+    n->s->slf = params.slf;
+    n->s->type = neuron_type::LIF;
+    n->p = nullptr;
     return n;
   }
 
   template<typename T>
-  __host__ __device__ T neuron_forward(neuron_state<T> *n, T I, T T_step) {
-    T output = T{0};
-    T dt = T_step - n->rest_time < 0 ? 0 : T_step - n->rest_time > T_step ? T_step : T_step - n->rest_time;
-
-    if (n->rest_time > 0) {
-        n->rest_time -= T_step;
-    } else {
-        n->v = I + (n->v - I) * std::exp(-dt / n->tau_rc);
-    }
-
-    if (n->v >= n->v_th + n->w) {
-      output = T{1} / dt;
-      n->w += n->b;
-      T st = dt + n->tau_rc * std::log((n->v - I) / (n->v_th - I));
-      n->rest_time = n->tau_ref + st;
-      n->v = n->slf ? n->v - n->v_th : T{0};
-    }
-
-    n->w = n->w * std::exp(-dt / n->tau_w) + n->b * (output > 0);
-    return output;
+  neuron<T>* neuron_create(adaptive_neuron_creation_parameters<T> params) {
+    neuron<T> *n = new neuron<T>;
+    n->s = new adaptive_neuron_state<T>;
+    n->s->v = params.v_init;
+    n->s->v_th = params.v_th;
+    n->s->tau_rc = params.tau_rc;
+    n->s->tau_ref = params.tau_ref;
+    n->s->rest_time = 0;
+    n->s->slf = params.slf;
+    n->s->type = neuron_type::ALIF;
+    auto *alif = static_cast<adaptive_neuron_state<T>*>(n->s);
+    alif->tau_w = params.tau_w;
+    alif->b = params.b;
+    alif->w = params.w_init;
+    n->p = nullptr;
+    return n;
   }
+
 
   template<typename T>
   __host__ __device__ T neuron_analytical_rate(neuron_state<T> *n, T I) {
@@ -56,10 +53,8 @@ namespace snn {
     return gb;
   }
 
-  // Explicit instantiations ensure the compiler generates code for these types
-  // so that the GPU linker can find them across translation units.
-  template neuron_state<float>* neuron_init<float>(neuron_creation_parameters<float>);
-  template __host__ __device__ float neuron_forward<float>(neuron_state<float>*, float, float);
-  template __host__ __device__ float neuron_analytical_rate<float>(neuron_state<float>*, float);
+  template neuron<float>* neuron_create<float>(neuron_creation_parameters<float>);
+  template neuron<float>* neuron_create<float>(adaptive_neuron_creation_parameters<float>);
+  template __host__ __device__ float neuron_analytical_rate<float>(neuron_state<float>*, float, float);
   template gain_bias<float> neuron_get_gain_bias<float>(neuron_state<float>*, float, float);
 }

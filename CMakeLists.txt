@@ -1,24 +1,22 @@
 cmake_minimum_required(VERSION 3.18)
 project(snn LANGUAGES CXX CUDA)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CUDA_STANDARD 17)
+set(CMAKE_CUDA_STANDARD 20)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_ARCHITECTURES native)
 
 find_package(CUDAToolkit REQUIRED)
-include_directories(include)
+include_directories(include include/compute)
 
-file(GLOB SRC_FILES "src/*.cpp")
-file(GLOB CU_SRC_FILES "src/*.cu")
+file(GLOB SRC_FILES "src/*.cpp" "src/compute/*.cpp")
+file(GLOB CU_SRC_FILES "src/*.cu" "src/compute/*.cu")
 
-# 1. Force CMake to treat these .cpp files completely as CUDA files
-set_source_files_properties(src/neuron.cpp src/synapse.cpp PROPERTIES LANGUAGE CUDA)
+set_source_files_properties(src/neuron.cpp src/synapse.cpp src/simulation.cpp src/compute/compute_ops.cpp src/compute/cpu.cpp PROPERTIES LANGUAGE CUDA)
 
 add_executable(snn ${SRC_FILES} ${CU_SRC_FILES})
 
-# 2. MANDATORY: Enable relocatable device code linking on the executable target
 set_target_properties(snn PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON
     CUDA_RESOLVE_DEVICE_SYMBOLS ON

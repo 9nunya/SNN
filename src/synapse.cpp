@@ -3,20 +3,26 @@
 
 namespace snn {
   template<typename T>
-  synapse_state<T> *synapse_init(T tau_s_) {
-    synapse_state<T> *s = new synapse_state<T>;
-    s->tau_s = tau_s_;
-    s->g = T{};
-    return s;
+  synapse<T>* synapse_create(synapse_creation_parameters<T> params) {
+    synapse<T> *syn = new synapse<T>;
+    syn->s = new synapse_state<T>;
+    syn->s->tau_s = params.tau_s;
+    syn->s->g = T{};
+    syn->s->type = synapse_type::ALPHA;
+    return syn;
   }
 
   template<typename T>
-  __host__ __device__ T synapse_forward(synapse_state<T> *s, T I, T T_step) {
-    s->g = I + std::exp(-T_step / s->tau_s) * (s->g - I);
-    return s->g;
+  synapse<T>* synapse_create(conductance_synapse_creation_parameters<T> params) {
+    synapse<T> *syn = new synapse<T>;
+    syn->s = new conductance_synapse_state<T>;
+    syn->s->tau_s = params.tau_s;
+    syn->s->g = T{};
+    syn->s->type = synapse_type::CONDUCTANCE;
+    static_cast<conductance_synapse_state<T>*>(syn->s)->E_rev = params.E_rev;
+    return syn;
   }
 
-  // Explicit template instantiations for the linker
-  template synapse_state<float>* synapse_init<float>(float);
-  template __host__ __device__ float synapse_forward<float>(synapse_state<float>*, float, float);
+  template synapse<float>* synapse_create<float>(synapse_creation_parameters<float>);
+  template synapse<float>* synapse_create<float>(conductance_synapse_creation_parameters<float>);
 }

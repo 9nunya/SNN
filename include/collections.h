@@ -11,11 +11,15 @@ namespace snn {
   struct neuron_gpu_data {
     T *v, *v_th, *tau_rc, *tau_ref, *rest_time, *a, *b, *e;
     bool *slf;
+    T *w, *tau_w;
+    int *type;
   };
 
   template<typename T>
   struct synapse_gpu_data {
     T *tau_s, *g;
+    T *E_rev;
+    int *type;
   };
 
   template<typename T>
@@ -27,7 +31,7 @@ namespace snn {
 
   template<typename T>
   struct synapse_collection {
-    std::vector<synapse_state<T>*> synapses;
+    std::vector<synapse<T>*> synapses;
     int size;
     synapse_gpu_data<T> device_data;
   };
@@ -36,7 +40,13 @@ namespace snn {
   neuron_collection<T> *neuron_collection_init(int size, neuron_creation_parameters<T> n_p, range<T> max_rate_range_, range<T> intercept_range_, std::vector<T> encoder_choices_);
 
   template<typename T>
-  synapse_collection<T> *synapse_collection_init(int size, T tau_s);
+  neuron_collection<T> *neuron_collection_init(int size, adaptive_neuron_creation_parameters<T> n_p, range<T> max_rate_range_, range<T> intercept_range_, std::vector<T> encoder_choices_);
+
+  template<typename T>
+  synapse_collection<T> *synapse_collection_init(int size, synapse_creation_parameters<T> s_p);
+
+  template<typename T>
+  synapse_collection<T> *synapse_collection_init(int size, conductance_synapse_creation_parameters<T> s_p);
 
   template<typename T>
   void run_simulation_gpu(neuron_collection<T>* nc, synapse_collection<T>* sc, T* h_output_buffer, int steps, T T_step);
