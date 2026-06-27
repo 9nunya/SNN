@@ -6,19 +6,19 @@ dont skid my research or i will skid YOU HAHAHAHAHAHAH
 
 # goals
 
-[ ] Text-based SNN model >= 85% GSM8K
-[ ] Simulation framework
-- [x] Neurons
-- [x] Synapses
-- [ ] Weights
-- [x] CPU/GPU agnostic code
-- [ ] Simulation configurations
-- [ ] Neuron, Synapse & Weights equation configurations
-- [ ] Simulation computation split (GPU / CPU)
-- [ ] Simulator API (not even there yet lel)
-[ ] Training framework
-- [ ] Spike-Timing Dependent Plasticity method
-- [ ] ForwardForward method
-- [ ] Autograd engine (fawwkkk)
-[ ] Foundational Text-based SNN model
-- [ ] ????
+- [ ] Text-based SNN model >= 85% GSM8K
+    - [ ] Simulation framework
+        - [x] Neurons
+        - [x] Synapses
+        - [ ] Weights
+        - [x] CPU/GPU agnostic code
+        - [ ] Simulation configurations
+        - [ ] Neuron, Synapse & Weights equation configurations
+        - [ ] Simulation computation split (GPU / CPU)
+        - [ ] Simulator API (not even there yet lel)
+    - [ ] Training framework
+        - [ ] Spike-Timing Dependent Plasticity method
+        - [ ] ForwardForward method
+        - [ ] Autograd engine (fawwkkk)
+    - [ ] Foundational Text-based SNN model
+        - [ ] ????
