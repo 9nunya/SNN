@@ -1,4 +1,3 @@
-%%writefile include/util.h
 #ifndef SNN_UTIL_H
 #define SNN_UTIL_H
 

@@ -1,4 +1,3 @@
-%%writefile include/neuron.h
 #ifndef SNN_NEURON_H
 #define SNN_NEURON_H
 

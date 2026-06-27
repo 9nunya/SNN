@@ -1,4 +1,3 @@
-%%writefile src/neuron.cpp
 #include "neuron.h"
 #include <cmath>
 

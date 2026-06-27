@@ -1,4 +1,3 @@
-%%writefile include/synapse.h
 #ifndef SNN_SYNAPSE_H
 #define SNN_SYNAPSE_H
 #include <cuda_runtime.h>

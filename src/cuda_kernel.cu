@@ -1,4 +1,3 @@
-%%writefile src/kernel.cu
 #include "collections.h"
 #include <cuda_runtime.h>
 #include <cmath>

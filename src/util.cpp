@@ -1,4 +1,3 @@
-%%writefile src/util.cpp
 #include "util.h"
 #include <stdexcept>
 #include <chrono>

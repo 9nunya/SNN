@@ -1,4 +1,3 @@
-%%writefile include/collections.h
 #ifndef SNN_COLLECTIONS_H
 #define SNN_COLLECTIONS_H
 

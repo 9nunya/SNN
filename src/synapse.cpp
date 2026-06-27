@@ -1,4 +1,3 @@
-%%writefile src/synapse.cpp
 #include "synapse.h"
 #include <cmath>
 

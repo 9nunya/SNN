@@ -1,4 +1,3 @@
-%%writefile src/collections.cpp
 #include "collections.h"
 #include <cuda_runtime.h>
 

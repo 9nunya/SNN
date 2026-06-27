@@ -1,4 +1,3 @@
-%%writefile CMakeLists.txt
 cmake_minimum_required(VERSION 3.18)
 project(snn LANGUAGES CXX CUDA)
 

@@ -1,4 +1,3 @@
-%%writefile src/main.cpp
 #include <iostream>
 #include <fstream>
 #include <vector>
