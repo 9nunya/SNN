@@ -54,7 +54,7 @@ int main() {
         float I = 0.0f;
         if (t >= 2.0f && t < 3.0f) I = -0.5f;
         else if (t >= 5.0f) I = 0.3f;
-        sim_cpu->s->inputs[step * NUM_NEURONS] = I;
+        sim_cpu->s->inputs[step * NUM_NEURONS] = I * 3;
     }
 
     snn::simulation_run_for(sim_cpu, T_max);
