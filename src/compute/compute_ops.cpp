@@ -33,11 +33,18 @@ __host__ __device__ T neuron_step_impl(neuron_state<T> *n, T I, T T_step) {
     }
 
     return output;
+  }
+
+template __host__ __device__ float neuron_step_impl<float>(neuron_state<float>*, float, float);
 }
 
+namespace snn::compute_ops {
 template<typename T>
 __host__ __device__ T synapse_step_impl(synapse_state<T> *s, T I, T T_step) {
     s->g = I + std::exp(-T_step / s->tau_s) * (s->g - I);
     return s->g;
+}
+
+template __host__ __device__ float synapse_step_impl<float>(synapse_state<float>*, float, float);
 }
 }
