@@ -25,9 +25,8 @@ neuron_collection<T> *neuron_collection_init(int size, neuron_creation_parameter
     std::vector<int> h_type(size, (int)neuron_type::LIF);
 
     for (int i = 0; i < size; i++) {
-        neuron<T> *n = new neuron<T>;
-        n->s = neuron_create<T>(n_p);
-        gain_bias<T> gb = neuron_get_gain_bias(n->s->s, util::random_uniform<T>(max_rate_range_.min, max_rate_range_.max), util::random_uniform<T>(intercept_range_.min, intercept_range_.max));
+        neuron<T> *n = neuron_create<T>(n_p);
+        gain_bias<T> gb = neuron_get_gain_bias(n->s, util::random_uniform<T>(max_rate_range_.min, max_rate_range_.max), util::random_uniform<T>(intercept_range_.min, intercept_range_.max));
         n->p = new neuron_parameters<T>{gb.gain, gb.bias, util::random_choice<T>(encoder_choices_)};
         h_a[i] = n->p->a; h_b[i] = n->p->b; h_e[i] = n->p->e;
         nc->neurons.push_back(n);
@@ -69,9 +68,8 @@ neuron_collection<T> *neuron_collection_init(int size, adaptive_neuron_creation_
     std::vector<T> h_w(size, n_p.w_init), h_tw(size, n_p.tau_w);
 
     for (int i = 0; i < size; i++) {
-        neuron<T> *n = new neuron<T>;
-        n->s = neuron_create<T>(n_p);
-        gain_bias<T> gb = neuron_get_gain_bias(n->s->s, util::random_uniform<T>(max_rate_range_.min, max_rate_range_.max), util::random_uniform<T>(intercept_range_.min, intercept_range_.max));
+        neuron<T> *n = neuron_create<T>(n_p);
+        gain_bias<T> gb = neuron_get_gain_bias(n->s, util::random_uniform<T>(max_rate_range_.min, max_rate_range_.max), util::random_uniform<T>(intercept_range_.min, intercept_range_.max));
         n->p = new neuron_parameters<T>{gb.gain, gb.bias, util::random_choice<T>(encoder_choices_)};
         h_a[i] = n->p->a; h_b[i] = n->p->b; h_e[i] = n->p->e;
         nc->neurons.push_back(n);
