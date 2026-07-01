@@ -7,7 +7,7 @@
 
 namespace snn {
 template<typename T>
-void cpu_process_neurons(neuron_collection<T>& coll, compute_load load, const T* inputs, T T_step, T* outputs);
+void cpu_process_neurons(neuron_collection<T>& coll, compute_load load, const T* inputs, T T_step, bool* outputs);
 
 template<typename T>
 void cpu_process_synapses(synapse_collection<T>& coll, compute_load load, const T* inputs, T T_step, T* outputs);

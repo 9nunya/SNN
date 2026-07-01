@@ -13,8 +13,9 @@ namespace snn {
   template<typename T>
   struct synapse_state {
     T 
-    tau_s, // decay rate of output voltage
-    g; // output voltage
+     tau_s, // decay rate of output voltage
+     g, // output voltage
+     weight; // synaptic weight
     synapse_type type = synapse_type::ALPHA;
   };
 
@@ -26,6 +27,7 @@ namespace snn {
   template<typename T>
   struct synapse_creation_parameters {
     T tau_s;
+    T weight = T{1}; // initial synaptic weight
     synapse_type type = synapse_type::ALPHA;
   };
 

@@ -8,6 +8,7 @@ namespace snn {
     syn->s = new synapse_state<T>;
     syn->s->tau_s = params.tau_s;
     syn->s->g = T{};
+    syn->s->weight = params.weight;
     syn->s->type = synapse_type::ALPHA;
     return syn;
   }
@@ -18,6 +19,7 @@ namespace snn {
     syn->s = new conductance_synapse_state<T>;
     syn->s->tau_s = params.tau_s;
     syn->s->g = T{};
+    syn->s->weight = params.weight;
     syn->s->type = synapse_type::CONDUCTANCE;
     static_cast<conductance_synapse_state<T>*>(syn->s)->E_rev = params.E_rev;
     return syn;

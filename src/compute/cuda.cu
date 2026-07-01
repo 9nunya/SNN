@@ -6,7 +6,7 @@
 namespace snn {
 
 template<typename T>
-__global__ void cuda_neuron_kernel(neuron_gpu_data<T> n_data, compute_load load, const T* d_inputs, T T_step, T* d_outputs) {
+__global__ void cuda_neuron_kernel(neuron_gpu_data<T> n_data, compute_load load, const T* d_inputs, T T_step, bool* d_outputs) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= load.count) return;
 
@@ -32,7 +32,7 @@ __global__ void cuda_neuron_kernel(neuron_gpu_data<T> n_data, compute_load load,
     }
 
     T input = d_inputs ? d_inputs[nid] : T{};
-    T spike = compute_ops::neuron_step_impl(pn, input, T_step);
+    bool spike = compute_ops::neuron_step_impl(pn, input, T_step);
 
     n_data.v[nid] = pn->v;
     n_data.rest_time[nid] = pn->rest_time;
@@ -73,7 +73,7 @@ __global__ void cuda_synapse_kernel(synapse_gpu_data<T> s_data, compute_load loa
 }
 
 template<typename T>
-void cuda_process_neurons(neuron_gpu_data<T>& data, compute_load load, const T* d_inputs, T T_step, T* d_outputs) {
+void cuda_process_neurons(neuron_gpu_data<T>& data, compute_load load, const T* d_inputs, T T_step, bool* d_outputs) {
     int threads = 256;
     int blocks = (load.count + threads - 1) / threads;
     cuda_neuron_kernel<<<blocks, threads>>>(data, load, d_inputs, T_step, d_outputs);
@@ -88,6 +88,6 @@ void cuda_process_synapses(synapse_gpu_data<T>& data, compute_load load, const T
     cudaDeviceSynchronize();
 }
 
-template void cuda_process_neurons<float>(neuron_gpu_data<float>&, compute_load, const float*, float, float*);
+template void cuda_process_neurons<float>(neuron_gpu_data<float>&, compute_load, const float*, float, bool*);
 template void cuda_process_synapses<float>(synapse_gpu_data<float>&, compute_load, const float*, float, float*);
 }

@@ -9,7 +9,8 @@ template<typename T>
 struct simulation_state {
     T cur_time;
     T* inputs;
-    T* outputs;
+    bool* spike_outputs;
+    T* synapse_outputs;
     T* v_logs;
     T* w_logs;
     T* v_th_logs;

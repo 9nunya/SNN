@@ -88,16 +88,17 @@ neuron_collection<T> *neuron_collection_init(int size, adaptive_neuron_creation_
     return nc;
 }
 
-template<typename T>
-synapse_collection<T> *synapse_collection_init(int size, synapse_creation_parameters<T> s_p) {
+  template<typename T>
+  synapse_collection<T> *synapse_collection_init(int size, synapse_creation_parameters<T> s_p) {
     synapse_collection<T> *sc = new synapse_collection<T>;
     sc->size = size;
     cudaMalloc(&sc->device_data.tau_s, size * sizeof(T));
     cudaMalloc(&sc->device_data.g, size * sizeof(T));
+    cudaMalloc(&sc->device_data.weight, size * sizeof(T));
     sc->device_data.E_rev = nullptr;
     cudaMalloc(&sc->device_data.type, size * sizeof(int));
 
-    std::vector<T> h_g(size, 0), h_ts(size, s_p.tau_s);
+    std::vector<T> h_g(size, 0), h_ts(size, s_p.tau_s), h_w(size, s_p.weight);
     std::vector<int> h_type(size, (int)synapse_type::ALPHA);
 
     for (int i = 0; i < size; i++) {
@@ -107,20 +108,22 @@ synapse_collection<T> *synapse_collection_init(int size, synapse_creation_parame
 
     cudaMemcpy(sc->device_data.tau_s, h_ts.data(), size * sizeof(T), cudaMemcpyHostToDevice);
     cudaMemcpy(sc->device_data.g, h_g.data(), size * sizeof(T), cudaMemcpyHostToDevice);
+    cudaMemcpy(sc->device_data.weight, h_w.data(), size * sizeof(T), cudaMemcpyHostToDevice);
     cudaMemcpy(sc->device_data.type, h_type.data(), size * sizeof(int), cudaMemcpyHostToDevice);
     return sc;
-}
+  }
 
-template<typename T>
-synapse_collection<T> *synapse_collection_init(int size, conductance_synapse_creation_parameters<T> s_p) {
+  template<typename T>
+  synapse_collection<T> *synapse_collection_init(int size, conductance_synapse_creation_parameters<T> s_p) {
     synapse_collection<T> *sc = new synapse_collection<T>;
     sc->size = size;
     cudaMalloc(&sc->device_data.tau_s, size * sizeof(T));
     cudaMalloc(&sc->device_data.g, size * sizeof(T));
+    cudaMalloc(&sc->device_data.weight, size * sizeof(T));
     cudaMalloc(&sc->device_data.E_rev, size * sizeof(T));
     cudaMalloc(&sc->device_data.type, size * sizeof(int));
 
-    std::vector<T> h_g(size, 0), h_ts(size, s_p.tau_s), h_er(size, s_p.E_rev);
+    std::vector<T> h_g(size, 0), h_ts(size, s_p.tau_s), h_w(size, s_p.weight), h_er(size, s_p.E_rev);
     std::vector<int> h_type(size, (int)synapse_type::CONDUCTANCE);
 
     for (int i = 0; i < size; i++) {
@@ -130,10 +133,11 @@ synapse_collection<T> *synapse_collection_init(int size, conductance_synapse_cre
 
     cudaMemcpy(sc->device_data.tau_s, h_ts.data(), size * sizeof(T), cudaMemcpyHostToDevice);
     cudaMemcpy(sc->device_data.g, h_g.data(), size * sizeof(T), cudaMemcpyHostToDevice);
+    cudaMemcpy(sc->device_data.weight, h_w.data(), size * sizeof(T), cudaMemcpyHostToDevice);
     cudaMemcpy(sc->device_data.E_rev, h_er.data(), size * sizeof(T), cudaMemcpyHostToDevice);
     cudaMemcpy(sc->device_data.type, h_type.data(), size * sizeof(int), cudaMemcpyHostToDevice);
     return sc;
-}
+  }
 
 template neuron_collection<float> *neuron_collection_init<float>(int, neuron_creation_parameters<float>, range<float>, range<float>, std::vector<float>);
 template neuron_collection<float> *neuron_collection_init<float>(int, adaptive_neuron_creation_parameters<float>, range<float>, range<float>, std::vector<float>);

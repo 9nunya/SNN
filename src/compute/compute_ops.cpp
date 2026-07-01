@@ -3,8 +3,8 @@
 
 namespace snn::compute_ops {
 template<typename T>
-__host__ __device__ T neuron_step_impl(neuron_state<T> *n, T I, T T_step) {
-    T output = T{0};
+__host__ __device__ bool neuron_step_impl(neuron_state<T> *n, T I, T T_step) {
+    bool output = false;
     T dt = T_step - n->rest_time < 0 ? 0 : T_step - n->rest_time > T_step ? T_step : T_step - n->rest_time;
 
     if (n->rest_time > 0) {
@@ -16,16 +16,16 @@ __host__ __device__ T neuron_step_impl(neuron_state<T> *n, T I, T T_step) {
     if (n->type == neuron_type::ALIF) {
       auto *alif = static_cast<adaptive_neuron_state<T>*>(n);
       if (n->v >= n->v_th + alif->w) {
-        output = T{1} / dt;
+        output = true;
         alif->w += alif->b;
         T st = dt + n->tau_rc * std::log((n->v - I) / (n->v_th - I));
         n->rest_time = n->tau_ref + st;
         n->v = n->slf ? n->v - n->v_th : T{0};
       }
-      alif->w = alif->w * std::exp(-dt / alif->tau_w) + alif->b * (output > 0);
+      alif->w = alif->w * std::exp(-dt / alif->tau_w) + alif->b * output;
     } else {
       if (n->v >= n->v_th) {
-        output = T{1} / dt;
+        output = true;
         T st = dt + n->tau_rc * std::log((n->v - I) / (n->v_th - I));
         n->rest_time = n->tau_ref + st;
         n->v = n->slf ? n->v - n->v_th : T{0};
@@ -33,9 +33,9 @@ __host__ __device__ T neuron_step_impl(neuron_state<T> *n, T I, T T_step) {
     }
 
     return output;
-  }
+}
 
-template __host__ __device__ float neuron_step_impl<float>(neuron_state<float>*, float, float);
+template bool neuron_step_impl<float>(neuron_state<float>*, float, float);
 }
 
 namespace snn::compute_ops {

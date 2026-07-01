@@ -18,6 +18,7 @@ namespace snn {
   template<typename T>
   struct synapse_gpu_data {
     T *tau_s, *g;
+    T *weight;
     T *E_rev;
     int *type;
   };

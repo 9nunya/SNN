@@ -13,7 +13,18 @@ include_directories(include include/compute)
 file(GLOB SRC_FILES "src/*.cpp" "src/compute/*.cpp")
 file(GLOB CU_SRC_FILES "src/*.cu" "src/compute/*.cu")
 
-set_source_files_properties(src/neuron.cpp src/synapse.cpp src/simulation.cpp src/compute/compute_ops.cpp src/compute/cpu.cpp PROPERTIES LANGUAGE CUDA)
+# These .cpp files need CUDA compilation because they use __host__ __device__
+set_source_files_properties(
+    src/neuron.cpp
+    src/synapse.cpp
+    src/simulation.cpp
+    src/compute/compute_ops.cpp
+    src/compute/cpu.cpp
+    src/cppn.cpp
+    src/brain.cpp
+    src/tournament_recorder.cpp
+    PROPERTIES LANGUAGE CUDA
+)
 
 add_executable(snn ${SRC_FILES} ${CU_SRC_FILES})
 
