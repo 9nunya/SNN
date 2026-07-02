@@ -183,54 +183,10 @@ namespace snn {
                           T reward, T dt);
 
     template<typename T>
-    void brain_gpu_cache_build(brain<T>* b) {
-        if (!b || !b->neuron_field) return;
-        brain_gpu_cache_destroy(b->gpu);
-        brain_gpu_cache_build(b->gpu, b);
-    }
+    void brain_gpu_cache_build(brain_gpu_cache<T>& g, brain<T>* b);
 
     template<typename T>
-    void brain_gpu_cache_destroy(brain<T>* b) {
-        if (!b) return;
-        brain_gpu_cache_destroy(b->gpu);
-    }
-
-    template<typename T>
-    void brain_gpu_cache_build(brain_gpu_cache& g, brain<T>* b) {
-        g.N = b->neuron_field->num_neurons;
-        g.S = b->neuron_field->num_synapses;
-        if (g.S > 0) {
-            cudaMalloc(&g.d_pre, g.S * sizeof(int));
-            cudaMalloc(&g.d_post, g.S * sizeof(int));
-            int* h_pre = new int[g.S];
-            int* h_post = new int[g.S];
-            for (int i = 0; i < g.S; ++i) {
-                auto* bs = b->neuron_field->synapses[i];
-                h_pre[i] = bs->pre_neuron_idx;
-                h_post[i] = bs->post_neuron_idx;
-            }
-            cudaMemcpy(g.d_pre, h_pre, g.S * sizeof(int), cudaMemcpyHostToDevice);
-            cudaMemcpy(g.d_post, h_post, g.S * sizeof(int), cudaMemcpyHostToDevice);
-            delete[] h_pre;
-            delete[] h_post;
-        }
-        if (g.N > 0) {
-            cudaMalloc(&g.d_old_spikes, g.N * sizeof(bool));
-            cudaMalloc(&g.d_new_spikes, g.N * sizeof(bool));
-            cudaMalloc(&g.d_I_syn, g.N * sizeof(float));
-        }
-        g.valid = true;
-    }
-
-    template<typename T>
-    void brain_gpu_cache_destroy(brain_gpu_cache& g) {
-        if (g.d_pre) cudaFree(g.d_pre);
-        if (g.d_post) cudaFree(g.d_post);
-        if (g.d_old_spikes) cudaFree(g.d_old_spikes);
-        if (g.d_new_spikes) cudaFree(g.d_new_spikes);
-        if (g.d_I_syn) cudaFree(g.d_I_syn);
-        g = brain_gpu_cache{};
-    }
+    void brain_gpu_cache_destroy(brain_gpu_cache<T>& g);
 
 }
 

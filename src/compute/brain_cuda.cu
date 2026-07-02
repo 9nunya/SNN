@@ -44,9 +44,6 @@ __global__ void neuron_step_kernel(
     float* __restrict__ d_tau_rc,
     float* __restrict__ d_tau_ref,
     float* __restrict__ d_rest_time,
-    float* __restrict__ d_a,
-    float* __restrict__ d_b,
-    float* __restrict__ d_e,
     bool* __restrict__ d_slf,
     int* __restrict__ d_type,
     float* __restrict__ d_w,
@@ -206,9 +203,6 @@ void brain_step_cuda(brain<T>* b, const T* external_inputs, int num_inputs, T re
             b->neurons->device_data.tau_rc,
             b->neurons->device_data.tau_ref,
             b->neurons->device_data.rest_time,
-            b->neurons->device_data.a,
-            b->neurons->device_data.b,
-            b->neurons->device_data.e,
             b->neurons->device_data.slf,
             b->neurons->device_data.type,
             b->neurons->device_data.w,
@@ -303,7 +297,7 @@ void brain_step_batch(brain<T>* const* brains, int num_brains,
 
     // Allocate flat device arrays
     int *d_neuron_offsets = nullptr, *d_syn_offsets = nullptr;
-    float *d_v = nullptr, *d_v_th = nullptr, *d_rest_time = nullptr;
+    float *d_v = nullptr, *d_v_th = nullptr, *d_tau_rc = nullptr, *d_tau_ref = nullptr, *d_rest_time = nullptr;
     bool *d_slf = nullptr; int *d_type = nullptr;
     float *d_w = nullptr, *d_tau_w = nullptr;
     float *d_old_spikes = nullptr, *d_new_spikes = nullptr, *d_I_syn = nullptr;
@@ -317,6 +311,8 @@ void brain_step_batch(brain<T>* const* brains, int num_brains,
     if (total_N > 0) {
         cudaMalloc(&d_v, total_N * sizeof(float));
         cudaMalloc(&d_v_th, total_N * sizeof(float));
+        cudaMalloc(&d_tau_rc, total_N * sizeof(float));
+        cudaMalloc(&d_tau_ref, total_N * sizeof(float));
         cudaMalloc(&d_rest_time, total_N * sizeof(float));
         cudaMalloc(&d_slf, total_N * sizeof(bool));
         cudaMalloc(&d_type, total_N * sizeof(int));
@@ -338,7 +334,7 @@ void brain_step_batch(brain<T>* const* brains, int num_brains,
     }
 
     // Pack host data into flat arrays
-    std::vector<float> h_v(total_N), h_v_th(total_N), h_rest(total_N);
+    std::vector<float> h_v(total_N), h_v_th(total_N), h_tau_rc(total_N), h_tau_ref(total_N), h_rest(total_N);
     std::vector<bool> h_slf(total_N);
     std::vector<int> h_type(total_N);
     std::vector<float> h_w(total_N), h_tau_w(total_N);
@@ -373,6 +369,8 @@ void brain_step_batch(brain<T>* const* brains, int num_brains,
             auto& nd = b->neurons->device_data;
             cudaMemcpy(h_v.data() + noff, nd.v, Ni * sizeof(float), cudaMemcpyDeviceToHost);
             cudaMemcpy(h_v_th.data() + noff, nd.v_th, Ni * sizeof(float), cudaMemcpyDeviceToHost);
+            cudaMemcpy(h_tau_rc.data() + noff, nd.tau_rc, Ni * sizeof(float), cudaMemcpyDeviceToHost);
+            cudaMemcpy(h_tau_ref.data() + noff, nd.tau_ref, Ni * sizeof(float), cudaMemcpyDeviceToHost);
             cudaMemcpy(h_rest.data() + noff, nd.rest_time, Ni * sizeof(float), cudaMemcpyDeviceToHost);
             cudaMemcpy(h_slf.data() + noff, nd.slf, Ni * sizeof(bool), cudaMemcpyDeviceToHost);
             cudaMemcpy(h_type.data() + noff, nd.type, Ni * sizeof(int), cudaMemcpyDeviceToHost);
@@ -391,6 +389,8 @@ void brain_step_batch(brain<T>* const* brains, int num_brains,
     if (total_N > 0) {
         cudaMemcpy(d_v, h_v.data(), total_N * sizeof(float), cudaMemcpyHostToDevice);
         cudaMemcpy(d_v_th, h_v_th.data(), total_N * sizeof(float), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_tau_rc, h_tau_rc.data(), total_N * sizeof(float), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_tau_ref, h_tau_ref.data(), total_N * sizeof(float), cudaMemcpyHostToDevice);
         cudaMemcpy(d_rest_time, h_rest.data(), total_N * sizeof(float), cudaMemcpyHostToDevice);
         cudaMemcpy(d_slf, h_slf.data(), total_N * sizeof(bool), cudaMemcpyHostToDevice);
         cudaMemcpy(d_type, h_type.data(), total_N * sizeof(int), cudaMemcpyHostToDevice);
@@ -429,7 +429,9 @@ void brain_step_batch(brain<T>* const* brains, int num_brains,
         int threads = 256;
         int blocks = (total_N + threads - 1) / threads;
         neuron_step_kernel<<<blocks, threads>>>(
-            d_v, d_v_th, d_rest_time, d_I_syn, d_external, d_new_spikes,
+            d_v, d_v_th, d_rest_time, d_slf, d_type,
+            d_w, d_tau_w,
+            d_I_syn, d_external, d_new_spikes,
             total_N, dt
         );
         cudaDeviceSynchronize();
@@ -451,6 +453,8 @@ void brain_step_batch(brain<T>* const* brains, int num_brains,
     if (total_N > 0) {
         cudaMemcpy(h_v.data(), d_v, total_N * sizeof(float), cudaMemcpyDeviceToHost);
         cudaMemcpy(h_v_th.data(), d_v_th, total_N * sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(h_tau_rc.data(), d_tau_rc, total_N * sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(h_tau_ref.data(), d_tau_ref, total_N * sizeof(float), cudaMemcpyDeviceToHost);
         cudaMemcpy(h_rest.data(), d_rest_time, total_N * sizeof(float), cudaMemcpyDeviceToHost);
         cudaMemcpy(h_w.data(), d_w, total_N * sizeof(float), cudaMemcpyDeviceToHost);
         cudaMemcpy(h_tau_w.data(), d_tau_w, total_N * sizeof(float), cudaMemcpyDeviceToHost);
@@ -477,6 +481,8 @@ void brain_step_batch(brain<T>* const* brains, int num_brains,
             auto& nd = b->neurons->device_data;
             cudaMemcpy(nd.v, h_v.data() + noff, Ni * sizeof(float), cudaMemcpyHostToDevice);
             cudaMemcpy(nd.v_th, h_v_th.data() + noff, Ni * sizeof(float), cudaMemcpyHostToDevice);
+            cudaMemcpy(nd.tau_rc, h_tau_rc.data() + noff, Ni * sizeof(float), cudaMemcpyHostToDevice);
+            cudaMemcpy(nd.tau_ref, h_tau_ref.data() + noff, Ni * sizeof(float), cudaMemcpyHostToDevice);
             cudaMemcpy(nd.rest_time, h_rest.data() + noff, Ni * sizeof(float), cudaMemcpyHostToDevice);
             if (nd.w) cudaMemcpy(nd.w, h_w.data() + noff, Ni * sizeof(float), cudaMemcpyHostToDevice);
             if (nd.tau_w) cudaMemcpy(nd.tau_w, h_tau_w.data() + noff, Ni * sizeof(float), cudaMemcpyHostToDevice);
@@ -502,6 +508,8 @@ void brain_step_batch(brain<T>* const* brains, int num_brains,
     cudaFree(d_syn_offsets);
     if (d_v) cudaFree(d_v);
     if (d_v_th) cudaFree(d_v_th);
+    if (d_tau_rc) cudaFree(d_tau_rc);
+    if (d_tau_ref) cudaFree(d_tau_ref);
     if (d_rest_time) cudaFree(d_rest_time);
     if (d_slf) cudaFree(d_slf);
     if (d_type) cudaFree(d_type);
