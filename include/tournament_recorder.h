@@ -28,13 +28,16 @@ void tournament_recorder_destroy(tournament_recorder* rec);
 
 // Write generation start header
 void tournament_recorder_begin_generation(tournament_recorder* rec,
-                                          const tournament_runner* tr,
+                                          tournament_runner* tr,
                                           int generation);
 
-// Write per-species results after run
 void tournament_recorder_species_result(tournament_recorder* rec,
-                                        const tournament_runner* tr,
+                                        tournament_runner* tr,
                                         int species_idx,
+                                        const float* fitness);
+
+void tournament_recorder_end_generation(tournament_recorder* rec,
+                                        tournament_runner* tr,
                                         const float* fitness);
 
 // Write generation summary after evolution
