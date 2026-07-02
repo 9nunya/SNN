@@ -20,6 +20,7 @@ namespace snn {
     T *tau_s, *g;
     T *weight;
     T *E_rev;
+    T *eligibility;
     int *type;
   };
 

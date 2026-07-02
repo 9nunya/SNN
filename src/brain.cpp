@@ -45,6 +45,8 @@ brain<float>* brain_create(brain_creation_params<float> params) {
     b->recorder.window = 0;
     b->recorder.num_regions = 0;
     b->recorder.head = 0;
+    b->gpu = {};
+    b->gpu.valid = false;
     return b;
 }
 
@@ -100,10 +102,17 @@ void brain_destroy(brain<float>* b) {
         if (b->synapses->device_data.g) cudaFree(b->synapses->device_data.g);
         if (b->synapses->device_data.weight) cudaFree(b->synapses->device_data.weight);
         if (b->synapses->device_data.E_rev) cudaFree(b->synapses->device_data.E_rev);
+        if (b->synapses->device_data.eligibility) cudaFree(b->synapses->device_data.eligibility);
         if (b->synapses->device_data.type) cudaFree(b->synapses->device_data.type);
         for (size_t i = 0; i < b->synapses->synapses.size(); ++i) delete b->synapses->synapses[i];
         delete b->synapses;
     }
+
+    if (b->gpu.d_pre) cudaFree(b->gpu.d_pre);
+    if (b->gpu.d_post) cudaFree(b->gpu.d_post);
+    if (b->gpu.d_old_spikes) cudaFree(b->gpu.d_old_spikes);
+    if (b->gpu.d_new_spikes) cudaFree(b->gpu.d_new_spikes);
+    if (b->gpu.d_I_syn) cudaFree(b->gpu.d_I_syn);
 
     delete b;
 }
@@ -243,7 +252,7 @@ void brain_populate_neurons(brain<float>* b, brain_populate_neurons_params<float
 
     b->neuron_field->num_neurons = new_count;
 
-    // 4. Grow last_spikes array
+    // Grow last_spikes array
     bool* new_spikes = new bool[new_count];
     if (b->last_spikes) {
         std::memcpy(new_spikes, b->last_spikes, old_count * sizeof(bool));
@@ -251,6 +260,8 @@ void brain_populate_neurons(brain<float>* b, brain_populate_neurons_params<float
     }
     std::fill(new_spikes + old_count, new_spikes + new_count, false);
     b->last_spikes = new_spikes;
+
+    b->gpu.valid = false;
 }
 
 // ---- brain_create_synapse ----
@@ -274,6 +285,7 @@ void brain_create_synapse(brain<float>* b, brain_create_synapse_params<float> pa
         cudaMemcpy(nd.g, od.g, old_count * sizeof(float), cudaMemcpyDeviceToDevice);
         cudaMemcpy(nd.weight, od.weight, old_count * sizeof(float), cudaMemcpyDeviceToDevice);
         cudaMemcpy(nd.type, od.type, old_count * sizeof(int), cudaMemcpyDeviceToDevice);
+        cudaMemcpy(nd.eligibility, od.eligibility, old_count * sizeof(float), cudaMemcpyDeviceToDevice);
         if (od.E_rev && nd.E_rev) {
             cudaMemcpy(nd.E_rev, od.E_rev, old_count * sizeof(float), cudaMemcpyDeviceToDevice);
         }
@@ -288,6 +300,7 @@ void brain_create_synapse(brain<float>* b, brain_create_synapse_params<float> pa
         cudaFree(od.tau_s); cudaFree(od.g); cudaFree(od.weight);
         cudaFree(od.type);
         if (od.E_rev) cudaFree(od.E_rev);
+        if (od.eligibility) cudaFree(od.eligibility);
         delete old_coll;
         b->synapses = new_coll;
     }
@@ -312,6 +325,8 @@ void brain_create_synapse(brain<float>* b, brain_create_synapse_params<float> pa
 
     b->neuron_field->synapses[idx] = bs;
     b->neuron_field->num_synapses = new_count;
+
+    b->gpu.valid = false;
 }
 
 // ---- brain_wire_region ----
@@ -377,6 +392,7 @@ void brain_wire_region(brain<float>* b, brain_wire_region_params<float> params) 
         cudaMemcpy(nd.g, od.g, old_syn_count * sizeof(float), cudaMemcpyDeviceToDevice);
         cudaMemcpy(nd.weight, od.weight, old_syn_count * sizeof(float), cudaMemcpyDeviceToDevice);
         cudaMemcpy(nd.type, od.type, old_syn_count * sizeof(int), cudaMemcpyDeviceToDevice);
+        cudaMemcpy(nd.eligibility, od.eligibility, old_syn_count * sizeof(float), cudaMemcpyDeviceToDevice);
         if (od.E_rev && nd.E_rev) {
             cudaMemcpy(nd.E_rev, od.E_rev, old_syn_count * sizeof(float), cudaMemcpyDeviceToDevice);
         }
@@ -391,6 +407,7 @@ void brain_wire_region(brain<float>* b, brain_wire_region_params<float> params) 
         cudaFree(od.tau_s); cudaFree(od.g); cudaFree(od.weight);
         cudaFree(od.type);
         if (od.E_rev) cudaFree(od.E_rev);
+        if (od.eligibility) cudaFree(od.eligibility);
         delete old_coll;
         b->synapses = new_coll;
     }
@@ -432,6 +449,8 @@ void brain_wire_region(brain<float>* b, brain_wire_region_params<float> params) 
     }
 
     b->neuron_field->num_synapses = final_syn_count;
+
+    b->gpu.valid = false;
 }
 
 // ---- brain_step_cpu ----
@@ -485,13 +504,6 @@ void brain_step_cpu(brain<float>* b, const float* external_inputs, int num_input
             bs->s->s->weight = bs->weight; // sync to device
         }
     }
-}
-
-// ---- brain_step_cuda (stub: falls back to CPU for now) ----
-
-void brain_step_cuda(brain<float>* b, const float* external_inputs, int num_inputs, float reward, float dt, int N, int S) {
-    // v1: just run CPU path
-    brain_step_cpu(b, external_inputs, num_inputs, reward, dt, N, S);
 }
 
 // ---- brain_step (dual backend) ----

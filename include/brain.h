@@ -44,6 +44,18 @@ namespace snn {
     };
 
     template<typename T>
+    struct brain_gpu_cache {
+        bool valid = false;
+        int N = 0;
+        int S = 0;
+        int *d_pre = nullptr;
+        int *d_post = nullptr;
+        bool *d_old_spikes = nullptr;
+        bool *d_new_spikes = nullptr;
+        float *d_I_syn = nullptr;
+    };
+
+    template<typename T>
     struct brain { // A LITERAL brain lol.
         brain_neuron_field<T> *neuron_field; // the entire consciousness of this brain
         neuron_collection<T> *neurons; // .. and it's raw neurons pointers..
@@ -52,11 +64,9 @@ namespace snn {
         T T_step;
         T T; // T_T.. you didnt know this meant the time? BRUH.
 
-        
         bool *last_spikes; // [N] spikes from previous step
 
         // the brain recorder so we can get important stuffs!
-        // e.g cortex readouts to decide an action
         struct {
             bool recording;
             int window; // number of steps to record
@@ -69,6 +79,8 @@ namespace snn {
         } recorder;
 
         backend_kind backend; // backend that the brains simmulation is running on
+
+        brain_gpu_cache<T> gpu;
     };
 
     template<typename T>
@@ -164,6 +176,61 @@ namespace snn {
 
     template<typename T>
     void brain_step_cuda(brain<T>* b, const T* external_inputs, int num_inputs, T reward, T dt, int N, int S);
+
+    template<typename T>
+    void brain_step_batch(brain<T>* const* brains, int num_brains,
+                          const T* const* external_inputs, int num_inputs,
+                          T reward, T dt);
+
+    template<typename T>
+    void brain_gpu_cache_build(brain<T>* b) {
+        if (!b || !b->neuron_field) return;
+        brain_gpu_cache_destroy(b->gpu);
+        brain_gpu_cache_build(b->gpu, b);
+    }
+
+    template<typename T>
+    void brain_gpu_cache_destroy(brain<T>* b) {
+        if (!b) return;
+        brain_gpu_cache_destroy(b->gpu);
+    }
+
+    template<typename T>
+    void brain_gpu_cache_build(brain_gpu_cache& g, brain<T>* b) {
+        g.N = b->neuron_field->num_neurons;
+        g.S = b->neuron_field->num_synapses;
+        if (g.S > 0) {
+            cudaMalloc(&g.d_pre, g.S * sizeof(int));
+            cudaMalloc(&g.d_post, g.S * sizeof(int));
+            int* h_pre = new int[g.S];
+            int* h_post = new int[g.S];
+            for (int i = 0; i < g.S; ++i) {
+                auto* bs = b->neuron_field->synapses[i];
+                h_pre[i] = bs->pre_neuron_idx;
+                h_post[i] = bs->post_neuron_idx;
+            }
+            cudaMemcpy(g.d_pre, h_pre, g.S * sizeof(int), cudaMemcpyHostToDevice);
+            cudaMemcpy(g.d_post, h_post, g.S * sizeof(int), cudaMemcpyHostToDevice);
+            delete[] h_pre;
+            delete[] h_post;
+        }
+        if (g.N > 0) {
+            cudaMalloc(&g.d_old_spikes, g.N * sizeof(bool));
+            cudaMalloc(&g.d_new_spikes, g.N * sizeof(bool));
+            cudaMalloc(&g.d_I_syn, g.N * sizeof(float));
+        }
+        g.valid = true;
+    }
+
+    template<typename T>
+    void brain_gpu_cache_destroy(brain_gpu_cache& g) {
+        if (g.d_pre) cudaFree(g.d_pre);
+        if (g.d_post) cudaFree(g.d_post);
+        if (g.d_old_spikes) cudaFree(g.d_old_spikes);
+        if (g.d_new_spikes) cudaFree(g.d_new_spikes);
+        if (g.d_I_syn) cudaFree(g.d_I_syn);
+        g = brain_gpu_cache{};
+    }
 
 }
 
