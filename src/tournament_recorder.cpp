@@ -74,7 +74,7 @@ void tournament_recorder_destroy(tournament_recorder* rec) {
 }
 
 void tournament_recorder_begin_generation(tournament_recorder* rec,
-                                          const tournament_runner* tr,
+                                          tournament_runner* tr,
                                           int generation) {
     if (!rec || !rec->enabled) return;
     rec->frame_counter = 0;
@@ -96,7 +96,7 @@ void tournament_recorder_begin_generation(tournament_recorder* rec,
 }
 
 void tournament_recorder_species_result(tournament_recorder* rec,
-                                        const tournament_runner* tr,
+                                        tournament_runner* tr,
                                         int species_idx,
                                         const float* fitness) {
     if (!rec || !rec->enabled) return;
@@ -155,7 +155,7 @@ void tournament_recorder_species_result(tournament_recorder* rec,
 }
 
 void tournament_recorder_end_generation(tournament_recorder* rec,
-                                        const tournament_runner* tr,
+                                        tournament_runner* tr,
                                         const float* fitness) {
     if (!rec || !rec->enabled) return;
 
