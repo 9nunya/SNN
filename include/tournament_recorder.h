@@ -1,11 +1,12 @@
 #ifndef SNN_TOURNAMENT_RECORDER_H
 #define SNN_TOURNAMENT_RECORDER_H
 
-#include "tournament.h"
 #include "snake_env.h"
 #include <cstdio>
 
 namespace snn {
+
+struct tournament_runner;
 
 // Tournament data recorder: exports per-generation data to files
 // for visualization and debug output.

@@ -26,16 +26,16 @@ snake_brain* snake_brain_create(brain_builder* builder,
     sb->alive = true;
 
     // Build brain from recipe + CPPN
-    sb->brain = brain_builder_build(builder, cppn, sb->T_step, backend_kind::CPU);
-    if (!sb->brain) {
+    sb->brain_ = brain_builder_build(builder, cppn, sb->T_step, backend_kind::CPU);
+    if (!sb->brain_) {
         delete sb;
         return nullptr;
     }
 
     // Create encoder
     sb->encoder = snake_encoder_create();
-    snake_encoder_init(sb->encoder, sb->brain,
-                       builder->cortices[0].region, // first cortex = sensory
+    snake_encoder_init(sb->encoder, sb->brain_,
+                       &builder->cortices[0].region, // first cortex = sensory
                        1,  // num_regions
                        10.0f,   // min_rate 10Hz
                        200.0f,  // max_rate 200Hz
@@ -46,7 +46,7 @@ snake_brain* snake_brain_create(brain_builder* builder,
 
     // Start recorder on motor region for action decoding
     int motor_region_idx = builder->num_cortices - 1;
-    brain_recorder_start(sb->brain, 20,
+    brain_recorder_start(sb->brain_, 20,
                          &builder->cortices[motor_region_idx].region,
                          1);
 
@@ -55,9 +55,9 @@ snake_brain* snake_brain_create(brain_builder* builder,
 
 void snake_brain_destroy(snake_brain* sb) {
     if (!sb) return;
-    if (sb->brain) {
-        brain_recorder_stop(sb->brain);
-        brain_destroy(sb->brain);
+    if (sb->brain_) {
+        brain_recorder_stop(sb->brain_);
+        brain_destroy(sb->brain_);
     }
     snake_encoder_destroy(sb->encoder);
     snake_env_destroy(&sb->env);
@@ -71,11 +71,11 @@ void snake_brain_reset(snake_brain* sb) {
     sb->step_count = 0;
 
     // Reset recorder
-    if (sb->brain && sb->brain->recorder.recording) {
-        brain_recorder_stop(sb->brain);
+    if (sb->brain_ && sb->brain_->recorder.recording) {
+        brain_recorder_stop(sb->brain_);
         // restart with same regions
         int motor_region_idx = sb->builder->num_cortices - 1;
-        brain_recorder_start(sb->brain, 20,
+        brain_recorder_start(sb->brain_, 20,
                              &sb->builder->cortices[motor_region_idx].region,
                              1);
     }
@@ -92,26 +92,26 @@ int snake_brain_step(snake_brain* sb) {
     snake_encoder_update(sb->encoder, obs);
 
     // 3. Pack encoder spikes into input_currents
-    int N = sb->brain->neuron_field->num_neurons;
+    int N = sb->brain_->neuron_field->num_neurons;
     float* inputs = new float[N];
     std::fill(inputs, inputs + N, 0.0f);
     snake_encoder_apply(sb->encoder, inputs);
 
     // 4. Step brain (no reward yet)
-    brain_step(sb->brain, inputs, N, 0.0f);
+    brain_step(sb->brain_, inputs, N, 0.0f);
     delete[] inputs;
 
     // 5. Read motor spikes to decide action
     int motor_region_idx = sb->builder->num_cortices - 1;
     int n_motor;
     brain_neuron<float>** motor = brain_get_neurons_in_region(
-        sb->brain, sb->builder->cortices[motor_region_idx].region, &n_motor);
+        sb->brain_, sb->builder->cortices[motor_region_idx].region, &n_motor);
 
     int action = 0;
     int best_spikes = -1;
     for (int m = 0; m < n_motor; ++m) {
         int count;
-        const bool* win = brain_recorder_get_region_window(sb->brain, m, &count);
+        const bool* win = brain_recorder_get_region_window(sb->brain_, m, &count);
         int spikes = 0;
         for (int w = 0; w < std::min(20, count); ++w)
             if (win[w]) spikes++;
@@ -127,7 +127,7 @@ int snake_brain_step(snake_brain* sb) {
     if (reward != 0.0f) {
         float* zeros = new float[N];
         std::fill(zeros, zeros + N, 0.0f);
-        brain_step(sb->brain, zeros, N, reward);
+        brain_step(sb->brain_, zeros, N, reward);
         delete[] zeros;
     }
 
@@ -145,10 +145,10 @@ int snake_brain_step(snake_brain* sb) {
             int motor_region_idx = sb->builder->num_cortices - 1;
             int n_motor;
             brain_neuron<float>** motor = brain_get_neurons_in_region(
-                sb->brain, sb->builder->cortices[motor_region_idx].region, &n_motor);
+                sb->brain_, sb->builder->cortices[motor_region_idx].region, &n_motor);
             for (int m = 0; m < std::min(4, n_motor); ++m) {
                 int count;
-                const bool* win = brain_recorder_get_region_window(sb->brain, m, &count);
+                const bool* win = brain_recorder_get_region_window(sb->brain_, m, &count);
                 int spikes = 0;
                 for (int w = 0; w < std::min(20, count); ++w)
                     if (win[w]) spikes++;
@@ -172,11 +172,11 @@ int snake_brain_step(snake_brain* sb) {
 }
 
 void snake_brain_step_reward(snake_brain* sb, float reward) {
-    if (!sb || !sb->brain) return;
-    int N = sb->brain->neuron_field->num_neurons;
+    if (!sb || !sb->brain_) return;
+    int N = sb->brain_->neuron_field->num_neurons;
     float* zeros = new float[N];
     std::fill(zeros, zeros + N, 0.0f);
-    brain_step(sb->brain, zeros, N, reward);
+    brain_step(sb->brain_, zeros, N, reward);
     delete[] zeros;
 }
 

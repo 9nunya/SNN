@@ -79,7 +79,7 @@ brain<float>* brain_builder_build(brain_builder* bb,
         wp.connection_probability = 0.0f;
         wp.cppn_link_threshold = bb->wire_rules[r].cppn_link_threshold;
         wp.cppn = cppn;
-        wp.synapse_params = { 0.01f, 1.0f, synapse_type::ALPHA };
+        wp.self_connections = false;
         brain_wire_region(b, wp);
     }
 

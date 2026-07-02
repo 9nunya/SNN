@@ -1,4 +1,5 @@
 #include "tournament_recorder.h"
+#include "tournament.h"
 #include <cstdio>
 #include <cstring>
 #include <ctime>

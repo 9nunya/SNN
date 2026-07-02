@@ -1,6 +1,7 @@
 #include "cppn.h"
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <algorithm>
 #include <unordered_map>
 
@@ -13,7 +14,7 @@ static float apply_act(float x, cppn_activation_function act) {
         case cppn_activation_function::SIGMOID:  return 1.0f / (1.0f + std::exp(-x));
         case cppn_activation_function::SIN:      return std::sin(x);
         case cppn_activation_function::GAUSSIAN: return std::exp(-x * x);
-        case cppn_activation_function::ABS:      return std::fabsf(x);
+        case cppn_activation_function::ABS:      return std::fabs(x);
         case cppn_activation_function::NEG:      return -x;
         case cppn_activation_function::RELU:     return x > 0.0f ? x : std::exp(x) - 1.0f;
         case cppn_activation_function::TANH:     return std::tanh(x);
@@ -410,7 +411,7 @@ float cppn_distance(const cppn_genome* a, const cppn_genome* b,
         bool in_b = b_map.count(inv) > 0;
         if (in_a && in_b) {
             matching++;
-            weight_diff += std::fabsf(a_map[inv]->weight - b_map[inv]->weight);
+            weight_diff += std::fabs(a_map[inv]->weight - b_map[inv]->weight);
         } else if (in_a || in_b) {
             if (inv <= std::min(max_a, max_b))
                 disjoint++;

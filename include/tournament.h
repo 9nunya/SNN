@@ -5,9 +5,10 @@
 #include "cppn.h"
 #include "snake_brain.h"
 #include "brain_builder.h"
-#include "tournament_recorder.h"
 
 namespace snn {
+
+struct tournament_recorder;
 
 // One species in the tournament: one CPPN + K children (snake_brains).
 struct tournament_species {

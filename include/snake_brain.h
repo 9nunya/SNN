@@ -23,7 +23,7 @@ namespace snn {
 //   4. Pack them into a brain_brain struct and provide step/reset/action
 
 struct snake_brain {
-    brain<float>* brain;         // the SNN
+    brain<float>* brain_;         // the SNN
     snake_env    env;            // the game environment
     snake_encoder* encoder;      // observation → spike encoder
     const cppn_genome* cppn;     // the CPPN that built this brain (not owned)

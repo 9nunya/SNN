@@ -20,10 +20,10 @@ namespace snn {
     };
 
     template<typename T>
-    struct brain_neuron { // A single neuron in the brain. Stores 3d pos, neuron, and last fire time (for R-STDP)
+    struct brain_neuron {
         neuron<T> *n;
         T last_fire_time;
-        bv3 xyz;
+        bv3<T> xyz;
     };
 
     template<typename T>
@@ -62,7 +62,7 @@ namespace snn {
         synapse_collection<T> *synapses; // .. and it's raw synapse pointers..
 
         T T_step;
-        T T; // T_T.. you didnt know this meant the time? BRUH.
+        T time;
 
         bool *last_spikes; // [N] spikes from previous step
 
@@ -113,6 +113,7 @@ namespace snn {
         T max_distance;
         T connection_probability;
         T cppn_link_threshold;
+        bool self_connections;
         const cppn_genome *cppn;
     };
 
@@ -157,13 +158,11 @@ namespace snn {
 
     // returns flat pointer into ring buffer for region r at current head
     // spike layout: [region_offsets[r] + head * region_width + local_idx]
-    const bool* brain_recorder_get_spikes(brain<T>* b, int region_idx, int* out_neurons);
+    const bool* brain_recorder_get_spikes(brain<float>* b, int region_idx, int* out_neurons);
 
-    template<typename T>
-    const bool* brain_recorder_get_region_window(brain<T>* b, int region_idx, int* out_num_spikes);
+    const bool* brain_recorder_get_region_window(brain<float>* b, int region_idx, int* out_num_spikes);
 
-    template<typename T>
-    const bool* brain_recorder_get_current_tick(brain<T>* b, int region_idx, int* out_num_spikes);
+    const bool* brain_recorder_get_current_tick(brain<float>* b, int region_idx, int* out_num_spikes);
 
     template<typename T>
     void brain_step(brain<T>* b, const T* input_currents, int num_input_currents, T reward);

@@ -76,7 +76,6 @@ __global__ void neuron_step_kernel(
     if (is_alif && d_w) {
         alif.w = d_w[nid];
         alif.tau_w = d_tau_w[nid];
-        alif.b = d_b ? d_b[nid] : 0.0f;
     }
 
     // Step neuron
@@ -300,7 +299,8 @@ void brain_step_batch(brain<T>* const* brains, int num_brains,
     float *d_v = nullptr, *d_v_th = nullptr, *d_tau_rc = nullptr, *d_tau_ref = nullptr, *d_rest_time = nullptr;
     bool *d_slf = nullptr; int *d_type = nullptr;
     float *d_w = nullptr, *d_tau_w = nullptr;
-    float *d_old_spikes = nullptr, *d_new_spikes = nullptr, *d_I_syn = nullptr;
+    bool *d_old_spikes = nullptr, *d_new_spikes = nullptr;
+    float *d_I_syn = nullptr;
     float *d_external = nullptr;
     float *d_g = nullptr, *d_eligibility = nullptr, *d_weight = nullptr, *d_tau_s = nullptr;
     int *d_pre = nullptr, *d_post = nullptr;
@@ -335,10 +335,10 @@ void brain_step_batch(brain<T>* const* brains, int num_brains,
 
     // Pack host data into flat arrays
     std::vector<float> h_v(total_N), h_v_th(total_N), h_tau_rc(total_N), h_tau_ref(total_N), h_rest(total_N);
-    std::vector<bool> h_slf(total_N);
+    std::vector<char> h_slf(total_N);
     std::vector<int> h_type(total_N);
     std::vector<float> h_w(total_N), h_tau_w(total_N);
-    std::vector<bool> h_old_spikes(total_N);
+    std::vector<char> h_old_spikes(total_N);
     std::vector<int> h_pre(total_S), h_post(total_S);
     std::vector<float> h_weight(total_S), h_g(total_S), h_elig(total_S), h_tau_s(total_S);
     std::vector<float> h_external(total_N, 0.0f);
