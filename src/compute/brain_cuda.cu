@@ -429,7 +429,8 @@ void brain_step_batch(brain<T>* const* brains, int num_brains,
         int threads = 256;
         int blocks = (total_N + threads - 1) / threads;
         neuron_step_kernel<<<blocks, threads>>>(
-            d_v, d_v_th, d_rest_time, d_slf, d_type,
+            d_v, d_v_th, d_tau_rc, d_tau_ref, d_rest_time,
+            d_slf, d_type,
             d_w, d_tau_w,
             d_I_syn, d_external, d_new_spikes,
             total_N, dt

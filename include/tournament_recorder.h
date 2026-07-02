@@ -4,9 +4,10 @@
 #include "snake_env.h"
 #include <cstdio>
 
-namespace snn {
-
 struct tournament_runner;
+struct cppn_genome;
+
+namespace snn {
 
 // Tournament data recorder: exports per-generation data to files
 // for visualization and debug output.

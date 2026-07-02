@@ -36,7 +36,7 @@ brain<float>* brain_create(brain_creation_params<float> params) {
     b->synapses = nullptr;
     b->last_spikes = nullptr;
     b->T_step = params.T_step;
-    b->T = 0.0f;
+    b->time = 0.0f;
     b->backend = params.backend;
     b->recorder.recording = false;
     b->recorder.spikes = nullptr;
@@ -479,7 +479,7 @@ void brain_step_cpu(brain<float>* b, const float* external_inputs, int num_input
         bool spike = compute_ops::neuron_step_impl(b->neurons->neurons[i]->s, I_total, dt);
         b->last_spikes[i] = spike;
         if (spike) {
-            b->neuron_field->neurons[i]->last_fire_time = b->T;
+            b->neuron_field->neurons[i]->last_fire_time = b->time;
         }
     }
     delete[] I_syn;
@@ -515,7 +515,7 @@ void brain_step(brain<float>* b, const float* input_currents, int num_input_curr
     float dt = b->T_step;
 
     if (N == 0 && S == 0) {
-        b->T += dt;
+        b->time += dt;
         return;
     }
 
@@ -534,7 +534,7 @@ void brain_step(brain<float>* b, const float* input_currents, int num_input_curr
         b->recorder.head++;
     }
 
-    b->T += dt;
+    b->time += dt;
 }
 
 // ---- queries ----
